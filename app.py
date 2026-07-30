@@ -50,7 +50,7 @@ if not st.session_state["authenticated"]:
     st.markdown("### 🔒 선생님 확인")
     password = st.text_input("접속 암호를 입력해 주세요:", type="password")
     if st.button("확인"):
-        if password == "떡잎초등학교":
+        if password == "행복하세요":
             st.session_state["authenticated"] = True
             st.rerun()
         else:
