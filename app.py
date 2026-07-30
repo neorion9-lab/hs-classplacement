@@ -43,6 +43,22 @@ st.markdown("""
 st.markdown('<div class="main-title">🏫 초등학교 자동 반배정 시스템 🏫</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">선생님, 쉽고 빠르게 반배정을 시작해 보세요!</div>', unsafe_allow_html=True)
 
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+if not st.session_state["authenticated"]:
+    st.markdown("### 🔒 선생님 확인")
+    password = st.text_input("접속 암호를 입력해 주세요:", type="password")
+    if st.button("확인"):
+        if password == "떡잎초등학교":
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("암호가 틀렸습니다. 다시 시도해 주세요.")
+    
+    st.markdown('<div class="footer">저작권: © 2026 Hyunsil_ORION. All rights reserved.</div>', unsafe_allow_html=True)
+    st.stop()
+
 @st.cache_data
 def get_template_excel():
     df_template = pd.DataFrame(columns=['학번', '이름', '성별', '이전반', '분리대상', '동반대상'])
