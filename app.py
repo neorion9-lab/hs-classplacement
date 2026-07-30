@@ -29,6 +29,14 @@ st.markdown("""
         padding: 10px 20px;
         font-size: 1.2rem;
     }
+    .footer {
+        background-color: #90b153;
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-weight: bold;
+        margin-top: 50px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -114,3 +122,5 @@ if uploaded_file is not None:
         st.error(f"오류가 발생했습니다. 파일 형식을 확인해 주세요: {e}")
 else:
     st.info("파일을 업로드하시면 다음 단계가 나타납니다.")
+
+st.markdown('<div class="footer">저작권: © 2026 Hyunsil_ORION. All rights reserved.</div>', unsafe_allow_html=True)
