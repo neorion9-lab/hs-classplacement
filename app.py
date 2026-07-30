@@ -33,11 +33,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">🏫 초등학교 자동 반배정 시스템 🏫</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">호호이! 액션가면보다 빠르게 반배정을 해볼까?</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">선생님, 쉽고 빠르게 반배정을 시작해 보세요!</div>', unsafe_allow_html=True)
+
+@st.cache_data
+def get_template_excel():
+    df_template = pd.DataFrame(columns=['학번', '이름', '성별', '이전반', '분리대상', '동반대상'])
+    df_template.loc[0] = ['10101', '홍길동', '남', '1', '', '']
+    
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df_template.to_excel(writer, index=False, sheet_name='학생명단양식')
+    return output.getvalue()
 
 # Step 1: File Upload
 st.header("1단계: 학생 명단 엑셀 파일 업로드 📂")
-st.write("학생 명단이 들어있는 엑셀 파일을 올려줘! (형식: 학번, 이름, 성별, 이전반, 분리대상, 동반대상)")
+st.write("학생 명단이 들어있는 엑셀 파일을 업로드해 주세요. (형식: 학번, 이름, 성별, 이전반, 분리대상, 동반대상)")
+
+st.download_button(
+    label="📝 엑셀 양식 다운로드 받기",
+    data=get_template_excel(),
+    file_name="학생명단_양식.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
 uploaded_file = st.file_uploader("엑셀 파일 선택", type=['xlsx', 'xls', 'csv'])
 
@@ -48,7 +65,7 @@ if uploaded_file is not None:
         else:
             df = pd.read_excel(uploaded_file)
             
-        st.success("짜잔! 파일 업로드 성공! 떡잎마을 방범대 출동 준비 완료!")
+        st.success("파일 업로드가 완료되었습니다!")
         st.write("미리보기:")
         st.dataframe(df.head())
         
@@ -57,15 +74,15 @@ if uploaded_file is not None:
         col1, col2 = st.columns(2)
         
         with col1:
-            num_classes = st.number_input("올해는 몇 반까지 있어?", min_value=1, max_value=20, value=5, step=1)
+            num_classes = st.number_input("배정할 학급 수를 입력해 주세요.", min_value=1, max_value=20, value=5, step=1)
             
         # Step 3: Run Algorithm
         st.header("3단계: 자동 반배정 실행 🚀")
         if st.button("반배정 시작!"):
-            with st.spinner("흰둥아 물어와! 빙글빙글 돌아가는 중..."):
+            with st.spinner("반배정을 진행하고 있습니다. 잠시만 기다려 주세요..."):
                 result_df = allocate_classes(df, num_classes)
                 
-            st.success("완성! 반배정이 끝났어! 🎉")
+            st.success("반배정이 완료되었습니다! 🎉")
             
             # Show summary
             st.subheader("📊 반배정 요약 (성비)")
@@ -94,6 +111,6 @@ if uploaded_file is not None:
             )
             
     except Exception as e:
-        st.error(f"으악! 에러가 났어! 확인해봐: {e}")
+        st.error(f"오류가 발생했습니다. 파일 형식을 확인해 주세요: {e}")
 else:
-    st.info("파일을 업로드하면 다음 단계가 나타날 거야!")
+    st.info("파일을 업로드하시면 다음 단계가 나타납니다.")
