@@ -44,6 +44,37 @@ def allocate_classes(df, num_classes):
         best_c = min(valid_classes, key=lambda c: class_counts[c][gender])
         return best_c
 
+    def get_given_name(full_name):
+        full_name = str(full_name).strip()
+        if len(full_name) <= 2:
+            return full_name[1:] if len(full_name) == 2 else full_name
+        elif len(full_name) == 4:
+            two_char_family_names = ["남궁", "황보", "제갈", "사공", "선우", "서문", "독고", "동방", "어구"]
+            if full_name[:2] in two_char_family_names:
+                return full_name[2:]
+        return full_name[1:]
+
+    # 0. Process Same Given Names (동명이인 분리)
+    given_name_groups = {}
+    for s in students:
+        gn = get_given_name(s['이름'])
+        if gn not in given_name_groups:
+            given_name_groups[gn] = []
+        given_name_groups[gn].append(s['학번'])
+        
+    for s in students:
+        gn = get_given_name(s['이름'])
+        same_name_ids = [tid for tid in given_name_groups[gn] if tid != s['학번']]
+        if same_name_ids:
+            current_sep = s.get('분리대상')
+            if pd.notna(current_sep) and str(current_sep).strip() != '' and str(current_sep) != 'nan':
+                existing = [x.strip().split('.')[0] for x in str(current_sep).split(',')]
+            else:
+                existing = []
+            
+            combined = list(set(existing + same_name_ids))
+            s['분리대상'] = ','.join(combined)
+
     # 1. Process "Together" constraints
     # Group students who need to be together
     for s in students:
