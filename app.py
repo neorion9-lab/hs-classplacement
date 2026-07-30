@@ -47,14 +47,17 @@ if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
 if not st.session_state["authenticated"]:
-    st.markdown("### 🔒 선생님 확인")
-    password = st.text_input("접속 암호를 입력해 주세요:", type="password")
-    if st.button("확인"):
-        if password == "행복하세요":
-            st.session_state["authenticated"] = True
-            st.rerun()
-        else:
-            st.error("암호가 틀렸습니다. 다시 시도해 주세요.")
+    with st.form("login_form"):
+        st.markdown("### 🔒 선생님 확인")
+        password = st.text_input("접속 암호를 입력해 주세요:", type="password")
+        submit_button = st.form_submit_button("확인")
+        
+        if submit_button:
+            if password == "behappy":
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("암호가 틀렸습니다. 다시 시도해 주세요.")
     
     st.markdown('<div class="footer">저작권: © 2026 Hyunsil_ORION. All rights reserved.</div>', unsafe_allow_html=True)
     st.stop()
