@@ -46,5 +46,16 @@ for _, row in tog_students.iterrows():
             target_classes.append(target_class_series.iloc[0])
     
     print(f"Student {student_id} is in class {student_class}. Targets {targets} are in {target_classes}")
+    print(f"Student {student_id} is in class {student_class}. Targets {targets} are in {target_classes}")
     if any(tc != student_class for tc in target_classes):
         print("ERROR! Together constraint violated.")
+
+# Check special categories distribution
+print("\nSpecial Categories Distribution:")
+print("Underachievers (학습부진학생):")
+under_dist = result[result['학습부진학생'] == 'O'].groupby('배정반').size()
+print(under_dist)
+
+print("\nGuidance Needed (생활지도필요학생):")
+guidance_dist = result[result['생활지도필요학생'] == 'O'].groupby('배정반').size()
+print(guidance_dist)

@@ -17,8 +17,8 @@ def generate_sample_data(num_students=120):
         prev_class = random.choice([1, 2, 3, 4, 5])
         
         # Special categories (sparse)
-        special_ed = 'O' if random.random() < 0.05 else '' # 특수아
-        behavioral = 'O' if random.random() < 0.03 else '' # 요선도아
+        underachiever = 'O' if random.random() < 0.05 else '' # 학습부진학생
+        guidance = 'O' if random.random() < 0.03 else '' # 생활지도필요학생
         
         # Separation/Together (Very sparse)
         # We will manually add some after generating
@@ -28,8 +28,8 @@ def generate_sample_data(num_students=120):
             '이름': name,
             '성별': gender,
             '이전반': prev_class,
-            '특수아': special_ed,
-            '요선도아': behavioral,
+            '학습부진학생': underachiever,
+            '생활지도필요학생': guidance,
             '분리대상': '',
             '동반대상': ''
         })

@@ -61,8 +61,8 @@ if not st.session_state["authenticated"]:
 
 @st.cache_data
 def get_template_excel():
-    df_template = pd.DataFrame(columns=['학번', '이름', '성별', '이전반', '분리대상', '동반대상'])
-    df_template.loc[0] = ['10101', '홍길동', '남', '1', '', '']
+    df_template = pd.DataFrame(columns=['학번', '이름', '성별', '이전반', '학습부진학생', '생활지도필요학생', '분리대상', '동반대상'])
+    df_template.loc[0] = ['10101', '홍길동', '남', '1', '', '', '', '']
     
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -71,7 +71,7 @@ def get_template_excel():
 
 # Step 1: File Upload
 st.header("1단계: 학생 명단 엑셀 파일 업로드 📂")
-st.write("학생 명단이 들어있는 엑셀 파일을 업로드해 주세요. (형식: 학번, 이름, 성별, 이전반, 분리대상, 동반대상)")
+st.write("학생 명단이 들어있는 엑셀 파일을 업로드해 주세요. (형식: 학번, 이름, 성별, 이전반, 학습부진학생, 생활지도필요학생, 분리대상, 동반대상)")
 
 st.download_button(
     label="📝 엑셀 양식 다운로드 받기",

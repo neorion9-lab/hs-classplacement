@@ -13,7 +13,7 @@ def allocate_classes(df, num_classes):
     classes = {i: [] for i in range(1, num_classes + 1)}
     
     # Track class counts
-    class_counts = {i: {'남': 0, '여': 0, 'total': 0} for i in range(1, num_classes + 1)}
+    class_counts = {i: {'남': 0, '여': 0, 'total': 0, '학습부진학생': 0, '생활지도필요학생': 0} for i in range(1, num_classes + 1)}
     
     # Convert dataframe to list of dicts for easier manipulation
     students = df.to_dict('records')
@@ -30,18 +30,33 @@ def allocate_classes(df, num_classes):
         classes[c_idx].append(student)
         class_counts[c_idx][student['성별']] += 1
         class_counts[c_idx]['total'] += 1
+        if str(student.get('학습부진학생', '')).strip() == 'O':
+            class_counts[c_idx]['학습부진학생'] += 1
+        if str(student.get('생활지도필요학생', '')).strip() == 'O':
+            class_counts[c_idx]['생활지도필요학생'] += 1
         placed.add(student['학번'])
         
-    def get_best_class_for_gender(gender, exclude_classes=None):
+    def get_best_class_for_student(student, exclude_classes=None):
         if exclude_classes is None:
             exclude_classes = []
         
-        # Find the class with the minimum number of students of this gender
         valid_classes = [c for c in range(1, num_classes + 1) if c not in exclude_classes]
         if not valid_classes:
             return random.choice(range(1, num_classes + 1))
             
-        best_c = min(valid_classes, key=lambda c: class_counts[c][gender])
+        is_underachiever = str(student.get('학습부진학생', '')).strip() == 'O'
+        is_guidance = str(student.get('생활지도필요학생', '')).strip() == 'O'
+        
+        def class_score(c):
+            score = []
+            if is_underachiever:
+                score.append(class_counts[c]['학습부진학생'])
+            if is_guidance:
+                score.append(class_counts[c]['생활지도필요학생'])
+            score.append(class_counts[c][student['성별']])
+            return tuple(score)
+            
+        best_c = min(valid_classes, key=class_score)
         return best_c
 
     def get_given_name(full_name):
@@ -112,7 +127,7 @@ def allocate_classes(df, num_classes):
                                 excluded_classes.add(c_idx)
                                 break
                                 
-                best_c = get_best_class_for_gender(s['성별'], exclude_classes=list(excluded_classes))
+                best_c = get_best_class_for_student(s, exclude_classes=list(excluded_classes))
                 add_to_class(s, best_c)
                 
                 # If target students are not placed yet, place them in different classes
@@ -120,17 +135,26 @@ def allocate_classes(df, num_classes):
                     if ts['학번'] not in placed:
                         excluded = excluded_classes.copy()
                         excluded.add(best_c) # Don't put where we just put 's'
-                        ts_best_c = get_best_class_for_gender(ts['성별'], exclude_classes=list(excluded))
+                        ts_best_c = get_best_class_for_student(ts, exclude_classes=list(excluded))
                         add_to_class(ts, ts_best_c)
                         excluded_classes.add(ts_best_c)
 
-    # 3. Process the rest (distribute evenly by gender)
-    # Shuffle remaining students to avoid alphabetical/ordered bias
+    # 3. Process the rest (distribute evenly by special categories, then gender)
     remaining = [s for s in students if s['학번'] not in placed]
-    random.shuffle(remaining)
     
-    for s in remaining:
-        best_c = get_best_class_for_gender(s['성별'])
+    # 3-1. Place students with special needs first
+    special_needs = [s for s in remaining if str(s.get('학습부진학생', '')).strip() == 'O' or str(s.get('생활지도필요학생', '')).strip() == 'O']
+    random.shuffle(special_needs)
+    for s in special_needs:
+        best_c = get_best_class_for_student(s)
+        add_to_class(s, best_c)
+        
+    # 3-2. Place the rest
+    regular = [s for s in students if s['학번'] not in placed]
+    random.shuffle(regular)
+    
+    for s in regular:
+        best_c = get_best_class_for_student(s)
         add_to_class(s, best_c)
         
     # Reconstruct DataFrame with '배정반'
