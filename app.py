@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 from allocator import allocate_classes
+from openpyxl.worksheet.datavalidation import DataValidation
 
 st.set_page_config(page_title="초등학교 반배정 앱", page_icon="🏫", layout="wide")
 
@@ -70,6 +71,22 @@ def get_template_excel():
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df_template.to_excel(writer, index=False, sheet_name='학생명단양식')
+        
+        # 엑셀 시트 가져오기
+        worksheet = writer.sheets['학생명단양식']
+        
+        # O, X 드롭다운 설정 (특수학급, 학습부진, 생활지도)
+        dv_ox = DataValidation(type="list", formula1='"O,X"', allow_blank=True)
+        worksheet.add_data_validation(dv_ox)
+        dv_ox.add('F2:F1000') # 특수학급학생
+        dv_ox.add('G2:G1000') # 학습부진학생
+        dv_ox.add('H2:H1000') # 생활지도필요학생
+        
+        # 남, 여 드롭다운 설정 (성별)
+        dv_gender = DataValidation(type="list", formula1='"남,여"', allow_blank=False)
+        worksheet.add_data_validation(dv_gender)
+        dv_gender.add('C2:C1000')
+        
     return output.getvalue()
 
 # Step 1: File Upload
