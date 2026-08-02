@@ -54,7 +54,7 @@ if not st.session_state["authenticated"]:
         submit_button = st.form_submit_button("확인")
         
         if submit_button:
-            if password == "behappy":
+            if password == "behappy1004":
                 st.session_state["authenticated"] = True
                 st.rerun()
             else:
