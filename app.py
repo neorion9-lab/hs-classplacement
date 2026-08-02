@@ -4,7 +4,7 @@ import io
 from allocator import allocate_classes
 from openpyxl.worksheet.datavalidation import DataValidation
 
-st.set_page_config(page_title="초등학교 반배정 앱", page_icon="🏫", layout="wide")
+st.set_page_config(page_title="반듯반듯 (Ban-Dut)", page_icon="🏫", layout="wide")
 
 # CSS for Jjangu tone
 st.markdown("""
@@ -41,8 +41,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">🏫 초등학교 자동 반배정 시스템 🏫</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">선생님, 쉽고 빠르게 반배정을 시작해 보세요!</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">🏫 반듯반듯 (Ban-Dut) 🏫</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">선생님, 쉽고 빠르면서 치우침없이 균형잡힌 반배정을 지금 시작해보세요</div>', unsafe_allow_html=True)
 
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
