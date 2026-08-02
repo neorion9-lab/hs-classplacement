@@ -64,8 +64,8 @@ if not st.session_state["authenticated"]:
 
 @st.cache_data
 def get_template_excel():
-    df_template = pd.DataFrame(columns=['학번', '이름', '성별', '이전반', '학습부진학생', '생활지도필요학생', '분리대상', '동반대상'])
-    df_template.loc[0] = ['10101', '홍길동', '남', '1', '', '', '', '']
+    df_template = pd.DataFrame(columns=['학번', '이름', '성별', '성적', '이전반', '특수학급학생', '학습부진학생', '생활지도필요학생', '분리대상', '동반대상'])
+    df_template.loc[0] = ['10101', '홍길동', '남', '95', '1', '', '', '', '', '']
     
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -74,7 +74,8 @@ def get_template_excel():
 
 # Step 1: File Upload
 st.header("1단계: 학생 명단 엑셀 파일 업로드 📂")
-st.write("학생 명단이 들어있는 엑셀 파일을 업로드해 주세요. (형식: 학번, 이름, 성별, 이전반, 학습부진학생, 생활지도필요학생, 분리대상, 동반대상)")
+st.write("학생 명단이 들어있는 엑셀 파일을 업로드해 주세요. (형식: 학번, 이름, 성별, 성적, 이전반, 특수학급학생, 학습부진학생, 생활지도필요학생, 분리대상, 동반대상)")
+st.write("※ **성적**란에는 높은 점수(또는 백점 만점)를 적어주시면, 점수가 높은 학생부터 차례로 각 반의 성적 밸런스가 맞게 배정됩니다!")
 
 st.download_button(
     label="📝 엑셀 양식 다운로드 받기",
@@ -101,7 +102,7 @@ if uploaded_file is not None:
         col1, col2 = st.columns(2)
         
         with col1:
-            num_classes = st.number_input("배정할 학급 수를 입력해 주세요.", min_value=1, max_value=20, value=5, step=1)
+            num_classes = st.number_input("배정할 학급 수를 입력해 주세요.", min_value=1, max_value=50, value=5, step=1)
             
         # Step 3: Run Algorithm
         st.header("3단계: 자동 반배정 실행 🚀")
@@ -112,9 +113,17 @@ if uploaded_file is not None:
             st.success("반배정이 완료되었습니다! 🎉")
             
             # Show summary
-            st.subheader("📊 반배정 요약 (성비)")
+            st.subheader("📊 반배정 요약 (성비 및 성적)")
             summary = result_df.groupby(['배정반', '성별']).size().unstack(fill_value=0)
             summary['총인원'] = summary.sum(axis=1)
+            
+            if '성적' in result_df.columns:
+                # 숫자 변환 불가능한 값은 제외 후 평균 계산
+                result_df['temp_score'] = pd.to_numeric(result_df['성적'], errors='coerce')
+                score_summary = result_df.groupby('배정반')['temp_score'].mean().round(1)
+                summary['평균성적'] = score_summary
+                result_df = result_df.drop(columns=['temp_score'])
+                
             st.dataframe(summary)
             
             st.subheader("📋 전체 배정 결과")

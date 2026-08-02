@@ -9,11 +9,22 @@ def allocate_classes(df, num_classes):
     """
     df = df.copy()
     
+    # 성적 컬럼 처리 (없으면 기본값 0, 숫자가 아니면 강제 변환 후 중앙값 혹은 0으로 채움)
+    if '성적' not in df.columns:
+        df['성적'] = 0
+    df['성적'] = pd.to_numeric(df['성적'], errors='coerce')
+    median_score = df['성적'].median()
+    if pd.isna(median_score):
+        median_score = 0
+    df['성적'] = df['성적'].fillna(median_score)
+    # 성적이 높을수록 낮은 순위 숫자 (1등, 2등...)
+    df['score_rank'] = df['성적'].rank(ascending=False, method='min')
+    
     # Initialize classes
     classes = {i: [] for i in range(1, num_classes + 1)}
     
     # Track class counts
-    class_counts = {i: {'남': 0, '여': 0, 'total': 0, '학습부진학생': 0, '생활지도필요학생': 0} for i in range(1, num_classes + 1)}
+    class_counts = {i: {'남': 0, '여': 0, 'total': 0, '특수학급학생': 0, '학습부진학생': 0, '생활지도필요학생': 0, 'rank_sum': 0} for i in range(1, num_classes + 1)}
     
     # Convert dataframe to list of dicts for easier manipulation
     students = df.to_dict('records')
@@ -30,10 +41,13 @@ def allocate_classes(df, num_classes):
         classes[c_idx].append(student)
         class_counts[c_idx][student['성별']] += 1
         class_counts[c_idx]['total'] += 1
+        if str(student.get('특수학급학생', '')).strip() == 'O':
+            class_counts[c_idx]['특수학급학생'] += 1
         if str(student.get('학습부진학생', '')).strip() == 'O':
             class_counts[c_idx]['학습부진학생'] += 1
         if str(student.get('생활지도필요학생', '')).strip() == 'O':
             class_counts[c_idx]['생활지도필요학생'] += 1
+        class_counts[c_idx]['rank_sum'] += student['score_rank']
         placed.add(student['학번'])
         
     def get_best_class_for_student(student, exclude_classes=None):
@@ -42,18 +56,32 @@ def allocate_classes(df, num_classes):
         
         valid_classes = [c for c in range(1, num_classes + 1) if c not in exclude_classes]
         if not valid_classes:
-            return random.choice(range(1, num_classes + 1))
+            # 분리 제약을 모두 지킬 수 없는 경우(반 개수보다 분리 대상이 많은 경우), 
+            # 밸런스 유지를 위해 모든 반을 다시 후보로 삼습니다.
+            valid_classes = list(range(1, num_classes + 1))
             
+        is_special_ed = str(student.get('특수학급학생', '')).strip() == 'O'
         is_underachiever = str(student.get('학습부진학생', '')).strip() == 'O'
         is_guidance = str(student.get('생활지도필요학생', '')).strip() == 'O'
         
         def class_score(c):
             score = []
+            if is_special_ed:
+                score.append(class_counts[c]['특수학급학생'])
             if is_underachiever:
                 score.append(class_counts[c]['학습부진학생'])
             if is_guidance:
                 score.append(class_counts[c]['생활지도필요학생'])
+            
+            # 1우선순위: 성별 (성별이 최대한 동일하게 배분되도록)
             score.append(class_counts[c][student['성별']])
+            
+            # 2우선순위: 성적 밸런스 (현재 배정된 학생들의 성적 순위 합이 큰(성적이 낮은) 반에 우수 학생 배정)
+            score.append(-class_counts[c]['rank_sum'])
+            
+            # 3우선순위: 총인원
+            score.append(class_counts[c]['total'])
+            
             return tuple(score)
             
         best_c = min(valid_classes, key=class_score)
@@ -143,17 +171,31 @@ def allocate_classes(df, num_classes):
     remaining = [s for s in students if s['학번'] not in placed]
     
     # 3-1. Place students with special needs first
-    special_needs = [s for s in remaining if str(s.get('학습부진학생', '')).strip() == 'O' or str(s.get('생활지도필요학생', '')).strip() == 'O']
-    random.shuffle(special_needs)
+    special_needs = [s for s in remaining if str(s.get('특수학급학생', '')).strip() == 'O' or str(s.get('학습부진학생', '')).strip() == 'O' or str(s.get('생활지도필요학생', '')).strip() == 'O']
+    special_needs.sort(key=lambda x: x['score_rank'])
     for s in special_needs:
         best_c = get_best_class_for_student(s)
         add_to_class(s, best_c)
         
     # 3-2. Place the rest
     regular = [s for s in students if s['학번'] not in placed]
-    random.shuffle(regular)
+    regular.sort(key=lambda x: x['score_rank'])
     
-    for s in regular:
+    # 남녀를 번갈아가며 배정하기 위해 분리
+    regular_boys = [s for s in regular if s['성별'] == '남']
+    regular_girls = [s for s in regular if s['성별'] == '여']
+    
+    regular_merged = []
+    i, j = 0, 0
+    while i < len(regular_boys) or j < len(regular_girls):
+        if i < len(regular_boys):
+            regular_merged.append(regular_boys[i])
+            i += 1
+        if j < len(regular_girls):
+            regular_merged.append(regular_girls[j])
+            j += 1
+            
+    for s in regular_merged:
         best_c = get_best_class_for_student(s)
         add_to_class(s, best_c)
         

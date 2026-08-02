@@ -14,9 +14,11 @@ def generate_sample_data(num_students=120):
     for i in range(1, num_students + 1):
         name = random.choice(last_names) + random.choice(first_names)
         gender = random.choice(['남', '여'])
+        score = random.randint(40, 100)
         prev_class = random.choice([1, 2, 3, 4, 5])
         
         # Special categories (sparse)
+        special_ed = 'O' if random.random() < 0.02 else '' # 특수학급학생
         underachiever = 'O' if random.random() < 0.05 else '' # 학습부진학생
         guidance = 'O' if random.random() < 0.03 else '' # 생활지도필요학생
         
@@ -27,7 +29,9 @@ def generate_sample_data(num_students=120):
             '학번': str(20250000 + i),
             '이름': name,
             '성별': gender,
+            '성적': score,
             '이전반': prev_class,
+            '특수학급학생': special_ed,
             '학습부진학생': underachiever,
             '생활지도필요학생': guidance,
             '분리대상': '',

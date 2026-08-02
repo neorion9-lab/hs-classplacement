@@ -52,10 +52,21 @@ for _, row in tog_students.iterrows():
 
 # Check special categories distribution
 print("\nSpecial Categories Distribution:")
-print("Underachievers (학습부진학생):")
+print("Special Ed (특수학급학생):")
+special_ed_dist = result[result['특수학급학생'] == 'O'].groupby('배정반').size()
+print(special_ed_dist)
+
+print("\nUnderachievers (학습부진학생):")
 under_dist = result[result['학습부진학생'] == 'O'].groupby('배정반').size()
 print(under_dist)
 
 print("\nGuidance Needed (생활지도필요학생):")
 guidance_dist = result[result['생활지도필요학생'] == 'O'].groupby('배정반').size()
 print(guidance_dist)
+
+# Check score balance
+if '성적' in result.columns:
+    print("\nScore Balance (성적 균형):")
+    result['성적'] = pd.to_numeric(result['성적'], errors='coerce')
+    score_dist = result.groupby('배정반')['성적'].mean().round(1)
+    print(score_dist)
